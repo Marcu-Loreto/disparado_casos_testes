@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Message Dispatcher</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header .logo {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #25D366;
+            margin-bottom: 8px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .input-method {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 14px;
+            background: #f5f7fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .method-btn:hover {
+            border-color: #25D366;
+            background: #f0fff4;
+        }
+
+        .method-btn.active {
+            border-color: #25D366;
+            background: #e8f5e8;
+            color: #128C7E;
+        }
+
+        .method-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .section {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        label .required {
+            color: #e74c3c;
+        }
+
+        .phone-input {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .phone-input:focus-within {
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .phone-prefix {
+            background: #f5f7fa;
+            padding: 14px 12px;
+            color: #333;
+            font-weight: 500;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        .phone-input input {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .textarea-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .clear-text {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .clear-text:hover {
+            text-decoration: underline;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #25D366;
+            background: rgba(37, 211, 102, 0.05);
+        }
+
+        .upload-area.has-file {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.05);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            color: #ccc;
+        }
+
+        .upload-area.has-file .upload-icon {
+            color: #27ae60;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .upload-text strong {
+            color: #25D366;
+        }
+
+        .upload-text-small {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .file-info.show {
+            display: flex;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #25D366;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .file-size {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 8px;
+            transition: transform 0.2s;
+        }
+
+        .remove-file:hover {
+            transform: scale(1.1);
+        }
+
+        .progress-container {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #25D366 0%, #128C7E 100%);
+            width: 0%;
+            transition: width 0.4s ease-out;
+            border-radius: 6px;
+        }
+
+        .progress-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .status-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-icon.success {
+            color: #27ae60;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .response {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .response.show {
+            display: block;
+        }
+
+        .response.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .response pre {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .delay-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .delay-input label {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .delay-input input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px;
+            }
+            .input-method {
+                flex-direction: column;
+            }
+            .method-btn {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📱</div>
+            <h1>Disparador de Mensagens via WhatsApp </h1>
+            <p class="subtitle">Envie listas de mensagens automatizadas via WhatsApp</p>
+        </div>
+
+        <div class="input-method">
+            <button class="method-btn active" id="btnText" onclick="switchMethod('text')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                Colar Lista
+            </button>
+            <button class="method-btn" id="btnJson" onclick="switchMethod('json')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                JSON Avançado
+            </button>
+            <button class="method-btn" id="btnUpload" onclick="switchMethod('upload')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <path d="M17 8l-5-5-5 5"/>
+                    <path d="M12 3v12"/>
+                </svg>
+                Upload Arquivo
+            </button>
+        </div>
+
+        <!-- Seção Colar Lista -->
+        <div class="section active" id="sectionText">
+            <div class="form-group">
+                <label for="chatbotPhone">Número do WhatsApp <span class="required">*</span></label>
+                <div class="phone-input">
+                    <span class="phone-prefix">+55</span>
+                    <input type="tel" id="chatbotPhone" placeholder="Ex: 11999999999" pattern="[0-9]{10,11}" value="6132073332">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="messagesList">Cole suas mensagens (uma por linha) <span class="required">*</span></label>
+                <textarea id="messagesList" placeholder="Cole aqui suas mensagens, uma por linha...
+
+Exemplo:
+🤖 Primeira mensagem de teste
+📱 Segunda mensagem do sistema
+✅ Terceira mensagem de confirmação
+🚀 Sistema funcionando perfeitamente!">🤖 Teste via interface web - Mensagem 1
+📱 Sistema de automação funcionando
+✅ Integração WhatsApp ativa
+🔥 Processamento de listas implementado
+⚡ Interface amigável para usuário
+🎯 Sistema pronto para produção</textarea>
+                <div class="textarea-footer">
+                    <span id="lineCount">0 linhas</span>
+                    <button class="clear-text" type="button" onclick="clearTextarea()">Limpar</button>
+                </div>
+                <div class="delay-input">
+                    <label for="defaultDelay">Delay entre mensagens:</label>
+                    <input type="number" id="defaultDelay" value="2" min="1" max="60">
+                    <span style="font-size: 0.85rem; color: #666;">segundos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção JSON Avançado -->
+        <div class="section" id="sectionJson">
+            <div class="form-group">
+                <label for="chatbotPhoneJson">Número do WhatsApp <span class="required">*</span></label>
+                <div class="phone-input">
+                    <span class="phone-prefix">+55</span>
+                    <input type="tel" id="chatbotPhoneJson" placeholder="Ex: 11999999999" pattern="[0-9]{10,11}" value="6132073332">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="jsonMessages">Mensagens em formato JSON <span class="required">*</span></label>
+                <textarea id="jsonMessages" placeholder='Formato JSON com controle individual de delay:
+
+[
+  {"text": "Primeira mensagem", "delay": 2},
+  {"text": "Segunda mensagem", "delay": 3},
+  {"text": "Terceira mensagem", "delay": 2}
+]'>[
+  {"text": "🤖 Teste JSON - Mensagem 1", "delay": 2},
+  {"text": "📱 Sistema funcionando via JSON!", "delay": 3},
+  {"text": "✅ Controle individual de delays", "delay": 2},
+  {"text": "🚀 Formato avançado implementado", "delay": 4}
+]</textarea>
+                <div class="textarea-footer">
+                    <span style="font-size: 0.8rem; color: #666;">Formato: [{"text": "mensagem", "delay": segundos}]</span>
+                    <button class="clear-text" type="button" onclick="clearJsonTextarea()">Limpar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Upload -->
+        <div class="section" id="sectionUpload">
+            <div class="form-group">
+                <label for="chatbotPhoneUpload">Número do WhatsApp <span class="required">*</span></label>
+                <div class="phone-input">
+                    <span class="phone-prefix">+55</span>
+                    <input type="tel" id="chatbotPhoneUpload" placeholder="Ex: 11999999999" pattern="[0-9]{10,11}" value="6132073332">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Selecione o arquivo <span class="required">*</span></label>
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <path d="M17 8l-5-5-5 5"/>
+                        <path d="M12 3v12"/>
+                    </svg>
+                    <p class="upload-text">Arraste e solte aqui ou <strong>clique para selecionar</strong></p>
+                    <p class="upload-text-small">Formatos aceitos: .xlsx, .xls, .csv</p>
+                </div>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                <div class="file-info" id="fileInfo">
+                    <div class="file-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-size" id="fileSize"></div>
+                    </div>
+                    <button class="remove-file" id="removeFile" type="button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header">
+                <span>Progresso do Envio</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-status">
+                <svg class="status-icon spinning" id="statusIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                </svg>
+                <span id="statusText">Preparando envio...</span>
+            </div>
+        </div>
+
+        <button type="button" class="submit-btn" id="submitBtn" onclick="submitData()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2l-7 20-4-9-9-4z"/>
+                <path d="M22 2L11 13"/>
+            </svg>
+            <span id="btnText">Enviar Mensagens</span>
+        </button>
+
+        <div class="response" id="response"></div>
+    </div>
+    <script>
+        // URL do webhook (ajuste conforme necessário)
+        const WEBHOOK_URL = 'http://localhost:8000/webhook/tela2';
+        
+        // Elementos DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFile = document.getElementById('removeFile');
+        const messagesList = document.getElementById('messagesList');
+        const jsonMessages = document.getElementById('jsonMessages');
+        const lineCount = document.getElementById('lineCount');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const responseDiv = document.getElementById('response');
+        
+        let selectedFile = null;
+        let currentMethod = 'text';
+
+        // Inicialização
+        updateLineCount();
+
+        function switchMethod(method) {
+            currentMethod = method;
+            
+            // Atualiza botões
+            document.getElementById('btnText').classList.toggle('active', method === 'text');
+            document.getElementById('btnJson').classList.toggle('active', method === 'json');
+            document.getElementById('btnUpload').classList.toggle('active', method === 'upload');
+            
+            // Atualiza seções
+            document.getElementById('sectionText').classList.toggle('active', method === 'text');
+            document.getElementById('sectionJson').classList.toggle('active', method === 'json');
+            document.getElementById('sectionUpload').classList.toggle('active', method === 'upload');
+            
+            // Limpa resposta
+            responseDiv.className = 'response';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function updateLineCount() {
+            const lines = messagesList.value.split('\n').filter(line => line.trim()).length;
+            lineCount.textContent = `${lines} linha${lines !== 1 ? 's' : ''}`;
+        }
+
+        function clearTextarea() {
+            messagesList.value = '';
+            updateLineCount();
+        }
+
+        function clearJsonTextarea() {
+            jsonMessages.value = '';
+        }
+
+        function selectFile(file) {
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+                'text/csv'
+            ];
+            
+            if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                showResponse('Formato de arquivo não suportado. Use .xlsx, .xls ou .csv', true);
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.add('show');
+            uploadArea.classList.add('has-file');
+            responseDiv.className = 'response';
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            uploadArea.classList.remove('has-file');
+        }
+
+        // Event listeners para upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) selectFile(file);
+        });
+        
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) selectFile(file);
+        });
+        
+        removeFile.addEventListener('click', clearFile);
+        messagesList.addEventListener('input', updateLineCount);
+
+        function animateProgress(targetPercent, duration = 800) {
+            const start = parseInt(progressFill.style.width) || 0;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + (targetPercent - start) * easeOut);
+                
+                progressFill.style.width = current + '%';
+                progressPercent.textContent = current + '%';
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        function showProgress() {
+            progressContainer.classList.add('show');
+            progressFill.style.width = '0%';
+            progressPercent.textContent = '0%';
+            statusIcon.classList.add('spinning');
+            statusIcon.classList.remove('success');
+            statusIcon.innerHTML = '<path d="M21 12a9 9 0 11-6.219-8.56"/>';
+            statusText.textContent = 'Preparando envio...';
+        }
+
+        function updateProgress(percent, status) {
+            animateProgress(percent);
+            statusText.textContent = status;
+        }
+
+        function completeProgress() {
+            animateProgress(100, 400);
+            progressPercent.textContent = '100%';
+            statusIcon.classList.remove('spinning');
+            statusIcon.classList.add('success');
+            statusIcon.innerHTML = '<polyline points="20,6 9,17 4,12"/>';
+            statusText.textContent = 'Concluído!';
+        }
+
+        function hideProgress() {
+            setTimeout(() => {
+                progressContainer.classList.remove('show');
+            }, 2000);
+        }
+
+        function showResponse(message, isError, data = null) {
+            responseDiv.innerHTML = message;
+            if (data) {
+                responseDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            responseDiv.className = 'response show ' + (isError ? 'error' : 'success');
+        }
+
+        async function submitData() {
+            let phone;
+            let payload;
+
+            // Validação baseada no método
+            if (currentMethod === 'text') {
+                phone = document.getElementById('chatbotPhone').value.trim();
+                if (!phone) {
+                    showResponse('Informe o número do WhatsApp.', true);
+                    return;
+                }
+                
+                const listText = messagesList.value.trim();
+                if (!listText) {
+                    showResponse('Cole a lista de mensagens.', true);
+                    return;
+                }
+                
+                const delay = parseInt(document.getElementById('defaultDelay').value) || 2;
+                
+                payload = {
+                    phone_number: '+55' + phone,
+                    text_list: listText
+                };
+                
+            } else if (currentMethod === 'json') {
+                phone = document.getElementById('chatbotPhoneJson').value.trim();
+                if (!phone) {
+                    showResponse('Informe o número do WhatsApp.', true);
+                    return;
+                }
+                
+                const jsonText = jsonMessages.value.trim();
+                if (!jsonText) {
+                    showResponse('Informe as mensagens em formato JSON.', true);
+                    return;
+                }
+                
+                try {
+                    const messages = JSON.parse(jsonText);
+                    if (!Array.isArray(messages)) {
+                        throw new Error('JSON deve ser um array de mensagens');
+                    }
+                    
+                    payload = {
+                        phone_number: '+55' + phone,
+                        messages: messages
+                    };
+                } catch (error) {
+                    showResponse('Formato JSON inválido: ' + error.message, true);
+                    return;
+                }
+                
+            } else if (currentMethod === 'upload') {
+                phone = document.getElementById('chatbotPhoneUpload').value.trim();
+                if (!phone) {
+                    showResponse('Informe o número do WhatsApp.', true);
+                    return;
+                }
+                
+                if (!selectedFile) {
+                    showResponse('Selecione um arquivo para enviar.', true);
+                    return;
+                }
+                
+                // Para upload, usaremos FormData
+                const formData = new FormData();
+                formData.append('phone_number', '+55' + phone);
+                formData.append('file', selectedFile);
+                
+                payload = formData;
+            }
+
+            // Desabilita botão e mostra progresso
+            submitBtn.disabled = true;
+            btnText.textContent = 'Enviando...';
+            responseDiv.className = 'response';
+            showProgress();
+
+            try {
+                updateProgress(20, 'Preparando dados...');
+                await new Promise(r => setTimeout(r, 300));
+
+                updateProgress(40, 'Enviando para servidor...');
+                
+                let response;
+                if (currentMethod === 'upload') {
+                    // Para upload de arquivo, usar endpoint específico
+                    const endpoint = selectedFile.name.endsWith('.csv') ? 
+                        `${WEBHOOK_URL}/upload/csv` : 
+                        `${WEBHOOK_URL}/upload/xlsx`;
+                    
+                    response = await fetch(endpoint, {
+                        method: 'POST',
+                        body: payload
+                    });
+                } else {
+                    // Para texto e JSON, usar endpoint principal
+                    response = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                updateProgress(70, 'Processando mensagens...');
+                await new Promise(r => setTimeout(r, 400));
+
+                updateProgress(90, 'Finalizando...');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                completeProgress();
+
+                // Mostra resultado de sucesso
+                const messageCount = result.sent_messages || result.processed_messages || 0;
+                showResponse(
+                    `✅ Sucesso! ${messageCount} mensagens enviadas para ${result.phone_number}`,
+                    false,
+                    result
+                );
+
+                // Limpa formulários
+                if (currentMethod === 'text') {
+                    clearTextarea();
+                } else if (currentMethod === 'json') {
+                    clearJsonTextarea();
+                } else if (currentMethod === 'upload') {
+                    clearFile();
+                }
+
+                hideProgress();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showResponse('Erro ao enviar mensagens: ' + error.message, true);
+                hideProgress();
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Enviar Mensagens';
+            }
+        }
+    </script>
+</body>
+</html>

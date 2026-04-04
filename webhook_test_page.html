@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Message Dispatcher - Teste</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #25D366;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        button {
+            background-color: #25D366;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #128C7E;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            border-bottom: none;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+        }
+        .tab-content {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 0 5px 5px 5px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 WhatsApp Message Dispatcher</h1>
+        <p>Envie listas de mensagens via WhatsApp usando diferentes formatos</p>
+        
+        <div class="form-group">
+            <label for="phoneNumber">Número do WhatsApp (com código do país):</label>
+            <input type="text" id="phoneNumber" placeholder="+5511999999999" value="+556132073332">
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('json')">JSON</div>
+            <div class="tab" onclick="showTab('paste')">Colar Texto</div>
+            <div class="tab" onclick="showTab('csv')">Upload CSV</div>
+            <div class="tab" onclick="showTab('xlsx')">Upload XLSX</div>
+        </div>
+        
+        <!-- Tab JSON -->
+        <div id="json-tab" class="tab-content active">
+            <div class="form-group">
+                <label for="jsonMessages">Mensagens (JSON):</label>
+                <textarea id="jsonMessages" placeholder='[
+  {"text": "Primeira mensagem", "delay": 2},
+  {"text": "Segunda mensagem", "delay": 3},
+  {"text": "Terceira mensagem", "delay": 2}
+]'>
+[
+  {"text": "🤖 Teste automatizado - Mensagem 1", "delay": 2},
+  {"text": "📱 Sistema de mensagens funcionando!", "delay": 3},
+  {"text": "✅ Integração WhatsApp ativa", "delay": 2}
+]</textarea>
+            </div>
+            <button onclick="sendJsonMessages()">Enviar Mensagens JSON</button>
+        </div>
+        
+        <!-- Tab Paste -->
+        <div id="paste-tab" class="tab-content">
+            <div class="form-group">
+                <label for="pasteMessages">Cole suas mensagens (uma por linha):</label>
+                <textarea id="pasteMessages" placeholder="Primeira mensagem
+Segunda mensagem
+Terceira mensagem">🤖 Teste via texto colado - Linha 1
+📱 Sistema funcionando - Linha 2
+✅ Mensagens enviadas com sucesso - Linha 3</textarea>
+            </div>
+            <button onclick="sendPasteMessages()">Enviar Mensagens Coladas</button>
+        </div>
+        
+        <!-- Tab CSV -->
+        <div id="csv-tab" class="tab-content">
+            <div class="form-group">
+                <label for="csvFile">Arquivo CSV:</label>
+                <input type="file" id="csvFile" accept=".csv">
+                <small>Formato esperado: coluna 'text' ou 'message' com as mensagens</small>
+            </div>
+            <button onclick="sendCsvFile()">Enviar CSV</button>
+        </div>
+        
+        <!-- Tab XLSX -->
+        <div id="xlsx-tab" class="tab-content">
+            <div class="form-group">
+                <label for="xlsxFile">Arquivo XLSX:</label>
+                <input type="file" id="xlsxFile" accept=".xlsx,.xls">
+                <small>Formato esperado: coluna 'text' ou 'message' com as mensagens</small>
+            </div>
+            <button onclick="sendXlsxFile()">Enviar XLSX</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = 'http://localhost:8000';
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result ' + (isError ? 'error' : 'success');
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+        
+        async function sendJsonMessages() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const messagesText = document.getElementById('jsonMessages').value;
+            
+            if (!phoneNumber) {
+                showResult('Por favor, informe o número do telefone', true);
+                return;
+            }
+            
+            try {
+                const messages = JSON.parse(messagesText);
+                
+                const payload = {
+                    phone_number: phoneNumber,
+                    messages: messages
+                };
+                
+                const response = await fetch(`${WEBHOOK_URL}/webhook/tela2`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Sucesso! ${result.processed_messages} mensagens enviadas para ${result.phone_number}`);
+                } else {
+                    showResult(`❌ Erro: ${result.detail || 'Erro desconhecido'}`, true);
+                }
+                
+            } catch (error) {
+                showResult(`❌ Erro: ${error.message}`, true);
+            }
+        }
+        
+        async function sendPasteMessages() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const textContent = document.getElementById('pasteMessages').value;
+            
+            if (!phoneNumber) {
+                showResult('Por favor, informe o número do telefone', true);
+                return;
+            }
+            
+            try {
+                const payload = {
+                    phone_number: phoneNumber,
+                    text_list: textContent
+                };
+                
+                const response = await fetch(`${WEBHOOK_URL}/webhook/tela2`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Sucesso! ${result.processed_messages} mensagens enviadas para ${result.phone_number}`);
+                } else {
+                    showResult(`❌ Erro: ${result.detail || 'Erro desconhecido'}`, true);
+                }
+                
+            } catch (error) {
+                showResult(`❌ Erro: ${error.message}`, true);
+            }
+        }
+        
+        async function sendCsvFile() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const fileInput = document.getElementById('csvFile');
+            
+            if (!phoneNumber) {
+                showResult('Por favor, informe o número do telefone', true);
+                return;
+            }
+            
+            if (!fileInput.files[0]) {
+                showResult('Por favor, selecione um arquivo CSV', true);
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('phone_number', phoneNumber);
+                formData.append('file', fileInput.files[0]);
+                
+                const response = await fetch(`${WEBHOOK_URL}/webhook/tela2/upload/csv`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Sucesso! ${result.processed_messages} mensagens enviadas para ${result.phone_number}`);
+                } else {
+                    showResult(`❌ Erro: ${result.detail || 'Erro desconhecido'}`, true);
+                }
+                
+            } catch (error) {
+                showResult(`❌ Erro: ${error.message}`, true);
+            }
+        }
+        
+        async function sendXlsxFile() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const fileInput = document.getElementById('xlsxFile');
+            
+            if (!phoneNumber) {
+                showResult('Por favor, informe o número do telefone', true);
+                return;
+            }
+            
+            if (!fileInput.files[0]) {
+                showResult('Por favor, selecione um arquivo XLSX', true);
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('phone_number', phoneNumber);
+                formData.append('file', fileInput.files[0]);
+                
+                const response = await fetch(`${WEBHOOK_URL}/webhook/tela2/upload/xlsx`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Sucesso! ${result.processed_messages} mensagens enviadas para ${result.phone_number}`);
+                } else {
+                    showResult(`❌ Erro: ${result.detail || 'Erro desconhecido'}`, true);
+                }
+                
+            } catch (error) {
+                showResult(`❌ Erro: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>

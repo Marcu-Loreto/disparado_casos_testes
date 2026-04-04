@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Message Sender</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header .logo {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #25D366;
+            margin-bottom: 8px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        label .required {
+            color: #e74c3c;
+        }
+
+        .phone-input {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .phone-input:focus-within {
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .phone-prefix {
+            background: #f5f7fa;
+            padding: 14px 12px;
+            color: #333;
+            font-weight: 500;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        .phone-input input {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 200px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+
+        .textarea-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .counter {
+            display: flex;
+            gap: 15px;
+        }
+
+        .counter-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .counter-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #25D366;
+        }
+
+        .counter-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .counter.warning .counter-number {
+            color: #f39c12;
+        }
+
+        .counter.error .counter-number {
+            color: #e74c3c;
+        }
+
+        .clear-text {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .clear-text:hover {
+            background-color: #fee;
+        }
+
+        .delay-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .delay-input label {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .delay-input input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .progress-container {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #25D366 0%, #128C7E 100%);
+            width: 0%;
+            transition: width 0.4s ease-out;
+            border-radius: 6px;
+        }
+
+        .progress-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .status-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-icon.success {
+            color: #27ae60;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .response {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .response.show {
+            display: block;
+        }
+
+        .response.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .response pre {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .limit-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeaa7;
+            display: none;
+        }
+
+        .limit-warning.show {
+            display: block;
+        }
+
+        .limit-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .limit-error.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px;
+            }
+            .counter {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📱</div>
+            <h1>WhatsApp Message Sender</h1>
+            <p class="subtitle">Envie até 1000 mensagens automatizadas via WhatsApp</p>
+        </div>
+
+        <div class="limit-warning" id="limitWarning">
+            ⚠️ Você está próximo do limite de 1000 mensagens
+        </div>
+
+        <div class="limit-error" id="limitError">
+            ❌ Limite excedido! Máximo de 1000 mensagens por envio
+        </div>
+
+        <div class="form-group">
+            <label for="chatbotPhone">Número do WhatsApp <span class="required">*</span></label>
+            <div class="phone-input">
+                <span class="phone-prefix">+55</span>
+                <input type="tel" id="chatbotPhone" placeholder="Ex: 11999999999" pattern="[0-9]{10,11}" value="6132073332">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="messagesList">Cole suas mensagens (uma por linha) <span class="required">*</span></label>
+            <textarea id="messagesList" placeholder="Cole aqui suas mensagens, uma por linha...
+
+Exemplo:
+🤖 Primeira mensagem de teste
+📱 Segunda mensagem do sistema
+✅ Terceira mensagem de confirmação
+🚀 Sistema funcionando perfeitamente!
+
+Máximo: 1000 mensagens por envio">🤖 Primeira mensagem via WhatsApp
+📱 Sistema de automação funcionando
+✅ Integração WhatsApp ativa
+🔥 Processamento de listas implementado
+⚡ Interface simples e eficiente
+🎯 Sistema pronto para uso
+📊 Monitoramento em tempo real
+🛡️ Validação automática
+🌟 Interface otimizada
+🎉 Teste concluído com sucesso!</textarea>
+            
+            <div class="textarea-footer">
+                <div class="counter" id="messageCounter">
+                    <div class="counter-item">
+                        <div class="counter-number" id="lineCount">0</div>
+                        <div class="counter-label">mensagens</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-number" id="charCount">0</div>
+                        <div class="counter-label">caracteres</div>
+                    </div>
+                    <div class="counter-item">
+                        <div class="counter-number" id="timeEstimate">0s</div>
+                        <div class="counter-label">tempo estimado</div>
+                    </div>
+                </div>
+                <button class="clear-text" type="button" onclick="clearTextarea()">Limpar Tudo</button>
+            </div>
+            
+            <div class="delay-input">
+                <label for="defaultDelay">Delay entre mensagens:</label>
+                <input type="number" id="defaultDelay" value="2" min="1" max="60">
+                <span style="font-size: 0.85rem; color: #666;">segundos</span>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header">
+                <span>Progresso do Envio</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-status">
+                <svg class="status-icon spinning" id="statusIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                </svg>
+                <span id="statusText">Preparando envio...</span>
+            </div>
+        </div>
+
+        <button type="button" class="submit-btn" id="submitBtn" onclick="submitData()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2l-7 20-4-9-9-4z"/>
+                <path d="M22 2L11 13"/>
+            </svg>
+            <span id="btnText">Enviar Mensagens</span>
+        </button>
+
+        <div class="response" id="response"></div>
+    </div>
+
+    <script>
+        // URL do webhook
+        const WEBHOOK_URL = 'http://localhost:8000/webhook/tela2';
+        const MAX_MESSAGES = 1000;
+        
+        // Elementos DOM
+        const messagesList = document.getElementById('messagesList');
+        const lineCount = document.getElementById('lineCount');
+        const charCount = document.getElementById('charCount');
+        const timeEstimate = document.getElementById('timeEstimate');
+        const messageCounter = document.getElementById('messageCounter');
+        const limitWarning = document.getElementById('limitWarning');
+        const limitError = document.getElementById('limitError');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const responseDiv = document.getElementById('response');
+        
+        // Inicialização
+        updateCounters();
+
+        function updateCounters() {
+            const lines = messagesList.value.split('\n').filter(line => line.trim());
+            const totalChars = messagesList.value.length;
+            const delay = parseInt(document.getElementById('defaultDelay').value) || 2;
+            const estimatedTime = lines.length * delay;
+            
+            // Atualiza contadores
+            lineCount.textContent = lines.length;
+            charCount.textContent = totalChars;
+            timeEstimate.textContent = formatTime(estimatedTime);
+            
+            // Atualiza classes baseado no limite
+            messageCounter.className = 'counter';
+            limitWarning.classList.remove('show');
+            limitError.classList.remove('show');
+            submitBtn.disabled = false;
+            
+            if (lines.length > MAX_MESSAGES) {
+                messageCounter.classList.add('error');
+                limitError.classList.add('show');
+                submitBtn.disabled = true;
+            } else if (lines.length > MAX_MESSAGES * 0.8) {
+                messageCounter.classList.add('warning');
+                limitWarning.classList.add('show');
+            }
+        }
+
+        function formatTime(seconds) {
+            if (seconds < 60) return seconds + 's';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+
+        function clearTextarea() {
+            messagesList.value = '';
+            updateCounters();
+        }
+
+        // Event listeners
+        messagesList.addEventListener('input', updateCounters);
+        document.getElementById('defaultDelay').addEventListener('input', updateCounters);
+
+        function animateProgress(targetPercent, duration = 800) {
+            const start = parseInt(progressFill.style.width) || 0;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + (targetPercent - start) * easeOut);
+                
+                progressFill.style.width = current + '%';
+                progressPercent.textContent = current + '%';
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        function showProgress() {
+            progressContainer.classList.add('show');
+            progressFill.style.width = '0%';
+            progressPercent.textContent = '0%';
+            statusIcon.classList.add('spinning');
+            statusIcon.classList.remove('success');
+            statusIcon.innerHTML = '<path d="M21 12a9 9 0 11-6.219-8.56"/>';
+            statusText.textContent = 'Preparando envio...';
+        }
+
+        function updateProgress(percent, status) {
+            animateProgress(percent);
+            statusText.textContent = status;
+        }
+
+        function completeProgress() {
+            animateProgress(100, 400);
+            progressPercent.textContent = '100%';
+            statusIcon.classList.remove('spinning');
+            statusIcon.classList.add('success');
+            statusIcon.innerHTML = '<polyline points="20,6 9,17 4,12"/>';
+            statusText.textContent = 'Concluído!';
+        }
+
+        function hideProgress() {
+            setTimeout(() => {
+                progressContainer.classList.remove('show');
+            }, 2000);
+        }
+
+        function showResponse(message, isError, data = null) {
+            responseDiv.innerHTML = message;
+            if (data) {
+                responseDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            responseDiv.className = 'response show ' + (isError ? 'error' : 'success');
+        }
+
+        async function submitData() {
+            const phone = document.getElementById('chatbotPhone').value.trim();
+            if (!phone) {
+                showResponse('Informe o número do WhatsApp.', true);
+                return;
+            }
+            
+            const listText = messagesList.value.trim();
+            if (!listText) {
+                showResponse('Cole a lista de mensagens.', true);
+                return;
+            }
+
+            const lines = listText.split('\n').filter(line => line.trim());
+            if (lines.length > MAX_MESSAGES) {
+                showResponse(`Limite excedido! Máximo de ${MAX_MESSAGES} mensagens por envio.`, true);
+                return;
+            }
+
+            const payload = {
+                phone_number: '+55' + phone,
+                text_list: listText
+            };
+
+            // Desabilita botão e mostra progresso
+            submitBtn.disabled = true;
+            btnText.textContent = 'Enviando...';
+            responseDiv.className = 'response';
+            showProgress();
+
+            try {
+                updateProgress(20, 'Preparando mensagens...');
+                await new Promise(r => setTimeout(r, 300));
+
+                updateProgress(40, 'Enviando para servidor...');
+                
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                updateProgress(70, 'Processando mensagens...');
+                await new Promise(r => setTimeout(r, 400));
+
+                updateProgress(90, 'Finalizando...');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                completeProgress();
+
+                // Mostra resultado de sucesso
+                const messageCount = result.sent_messages || 0;
+                showResponse(
+                    `✅ Sucesso! ${messageCount} mensagens enviadas para ${result.phone_number}`,
+                    false,
+                    {
+                        total_messages: result.total_messages,
+                        sent_messages: result.sent_messages,
+                        phone_number: result.phone_number
+                    }
+                );
+
+                // Limpa formulário
+                clearTextarea();
+                hideProgress();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showResponse('Erro ao enviar mensagens: ' + error.message, true);
+                hideProgress();
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Enviar Mensagens';
+            }
+        }
+    </script>
+</body>
+</html>

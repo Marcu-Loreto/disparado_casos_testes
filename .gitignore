@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Arquivos sensíveis
+.env
+*.log
+secrets.py
+*.key
+*.pem
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+.project
+.pydevproject
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+*~
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+*.cover
+.cache
+
+# Temporários
+*.tmp
+*.temp
+debug_*.py
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Documentação
+docs/_build/
+
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
