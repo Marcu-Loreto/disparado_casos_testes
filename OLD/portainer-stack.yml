@@ -1,0 +1,173 @@
+version: "3.8"
+
+# ========================================
+# WHATSAPP MESSAGE SENDER - PORTAINER STACK
+# ========================================
+# Use este arquivo no Portainer para deploy da stack completa
+
+services:
+  # Servidor API WhatsApp
+  whatsapp-api:
+    image: ghcr.io/marcu-loreto/whatsapp-sender:latest
+    container_name: whatsapp-sender-api
+    restart: unless-stopped
+
+    # Variáveis de ambiente - CONFIGURE AQUI
+    environment:
+      # Evolution API - OBRIGATÓRIO
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL:-https://evolution.etechats.com.br}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE:-TESTE_AUTO_MGI}
+
+      # Configuração da aplicação
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - WEBHOOK_HOST=0.0.0.0
+      - WEBHOOK_PORT=8000
+      - WEBHOOK_PATH=/webhook/:test_cases_auto
+
+      # Google Sheets (Opcional)
+      - GOOGLE_SHEETS_DOCUMENT_ID=${GOOGLE_SHEETS_DOCUMENT_ID:-}
+      - GOOGLE_SHEETS_TESTES_2026_SHEET_ID=${GOOGLE_SHEETS_TESTES_2026_SHEET_ID:-}
+
+      # GitHub (Opcional)
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+
+    # Portas expostas
+    ports:
+      - "8000:8000"
+
+    # Volumes para persistência
+    volumes:
+      - whatsapp-logs:/app/logs
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+
+    # Rede
+    networks:
+      - whatsapp-network
+
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Servidor Web Interface
+  whatsapp-web:
+    image: python:3.11-slim
+    container_name: whatsapp-sender-web
+    restart: unless-stopped
+
+    # Comando para servir arquivos estáticos
+    command: >
+      sh -c "
+      echo '<!DOCTYPE html>
+      <html lang=\"pt-BR\">
+      <head>
+          <meta charset=\"UTF-8\">
+          <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+          <title>WhatsApp Message Sender</title>
+          <style>
+              * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; }
+              body { background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+              .container { background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; max-width: 600px; width: 100%; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .logo { font-size: 3rem; margin-bottom: 10px; }
+              h1 { color: #25D366; margin-bottom: 8px; font-size: 1.8rem; }
+              .subtitle { color: #666; font-size: 0.95rem; }
+              .info { background: #e8f5e9; padding: 20px; border-radius: 10px; margin: 20px 0; }
+              .info h3 { color: #2e7d32; margin-bottom: 10px; }
+              .info p { color: #555; line-height: 1.6; margin: 5px 0; }
+              .btn { display: inline-block; padding: 12px 24px; background: #25D366; color: white; text-decoration: none; border-radius: 8px; margin: 10px 5px; transition: transform 0.2s; }
+              .btn:hover { transform: translateY(-2px); }
+          </style>
+      </head>
+      <body>
+          <div class=\"container\">
+              <div class=\"header\">
+                  <div class=\"logo\">📱</div>
+                  <h1>WhatsApp Message Sender</h1>
+                  <p class=\"subtitle\">Sistema de envio automatizado via WhatsApp</p>
+              </div>
+              <div class=\"info\">
+                  <h3>🚀 Sistema Ativo</h3>
+                  <p><strong>API WhatsApp:</strong> http://seu-servidor:8000</p>
+                  <p><strong>Webhook:</strong> http://seu-servidor:8000/webhook/tela2</p>
+                  <p><strong>Health Check:</strong> http://seu-servidor:8000/health</p>
+              </div>
+              <div class=\"info\">
+                  <h3>📋 Como Usar</h3>
+                  <p>1. Faça requisições POST para o webhook</p>
+                  <p>2. Envie JSON com phone_number e text_list</p>
+                  <p>3. Limite: 1000 mensagens por envio</p>
+              </div>
+              <div style=\"text-align: center; margin-top: 30px;\">
+                  <a href=\"http://seu-servidor:8000/health\" class=\"btn\" target=\"_blank\">🔍 Verificar Status</a>
+                  <a href=\"https://github.com/Marcu-Loreto/disparado_casos_testes\" class=\"btn\" target=\"_blank\">📚 Documentação</a>
+              </div>
+          </div>
+      </body>
+      </html>' > /app/index.html &&
+      python3 -m http.server 8080
+      "
+
+    # Diretório de trabalho
+    working_dir: /app
+
+    # Portas expostas
+    ports:
+      - "8080:8080"
+
+    # Dependências
+    depends_on:
+      whatsapp-api:
+        condition: service_healthy
+
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+    # Rede
+    networks:
+      - whatsapp-network
+
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# Rede isolada
+networks:
+  whatsapp-network:
+    driver: bridge
+
+# Volumes nomeados
+volumes:
+  whatsapp-logs:
+    driver: local

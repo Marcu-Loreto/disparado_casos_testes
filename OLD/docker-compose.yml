@@ -1,0 +1,114 @@
+version: "3.8"
+
+# ========================================
+# WHATSAPP MESSAGE SENDER - DOCKER COMPOSE
+# ========================================
+
+services:
+  # Servidor API WhatsApp
+  whatsapp-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: whatsapp-sender-api
+    restart: unless-stopped
+
+    # Variáveis de ambiente do .env
+    env_file:
+      - .env
+
+    # Portas expostas
+    ports:
+      - "8000:8000" # API WhatsApp
+
+    # Volumes para persistência
+    volumes:
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+
+    # Rede
+    networks:
+      - whatsapp-network
+
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Servidor Web Interface
+  whatsapp-web:
+    image: python:3.11-slim
+    container_name: whatsapp-sender-web
+    restart: unless-stopped
+
+    # Comando para servir arquivos estáticos
+    command: python3 -m http.server 8080
+
+    # Diretório de trabalho
+    working_dir: /app
+
+    # Portas expostas
+    ports:
+      - "8080:8080" # Interface Web
+
+    # Volumes
+    volumes:
+      - ./whatsapp_simple.html:/app/whatsapp_simple.html:ro
+      - ./whatsapp_sender_page.html:/app/whatsapp_sender_page.html:ro
+
+    # Dependências
+    depends_on:
+      whatsapp-api:
+        condition: service_healthy
+
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+    # Rede
+    networks:
+      - whatsapp-network
+
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# Rede isolada
+networks:
+  whatsapp-network:
+    driver: bridge
+    name: whatsapp-sender-network
+
+# Volumes nomeados (opcional)
+volumes:
+  logs:
+    driver: local

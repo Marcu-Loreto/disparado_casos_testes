@@ -1,0 +1,108 @@
+# ========================================
+# EASYPANEL CONFIGURATION
+# ========================================
+# Arquivo de configuração simplificado para EasyPanel
+
+name: whatsapp-sender
+description: Sistema de envio automatizado de mensagens via WhatsApp
+
+# Serviço Principal - API WhatsApp
+services:
+  api:
+    # Build
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # Porta
+    ports:
+      - 8000:8000
+
+    # Variáveis de Ambiente
+    environment:
+      # Evolution API - OBRIGATÓRIO
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL:-https://evolution.etechats.com.br}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      EVOLUTION_INSTANCE: ${EVOLUTION_INSTANCE:-TESTE_AUTO_MGI}
+
+      # Configuração
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      WEBHOOK_HOST: 0.0.0.0
+      WEBHOOK_PORT: 8000
+      WEBHOOK_PATH: /webhook/:test_cases_auto
+
+      # Opcional
+      GOOGLE_SHEETS_DOCUMENT_ID: ${GOOGLE_SHEETS_DOCUMENT_ID:-}
+      GOOGLE_SHEETS_TESTES_2026_SHEET_ID: ${GOOGLE_SHEETS_TESTES_2026_SHEET_ID:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+
+    # Volumes
+    volumes:
+      - logs:/app/logs
+
+    # Health Check
+    healthcheck:
+      test: curl -f http://localhost:8000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Recursos
+    resources:
+      limits:
+        cpus: "1"
+        memory: 512M
+      reservations:
+        cpus: "0.5"
+        memory: 256M
+
+    # Restart
+    restart: unless-stopped
+
+    # Domínios (configure no EasyPanel)
+    domains:
+      - api.whatsapp-sender.yourdomain.com
+
+# Volumes
+volumes:
+  logs:
+    driver: local
+
+# Configurações Adicionais
+deploy:
+  # Auto deploy quando houver push no GitHub
+  auto_deploy: true
+  branch: main
+
+  # Estratégia de deploy
+  strategy: rolling
+
+  # Backup automático
+  backup:
+    enabled: true
+    frequency: daily
+    retention: 7
+
+# Monitoramento
+monitoring:
+  # Alertas
+  alerts:
+    - type: health_check_failed
+      enabled: true
+    - type: high_cpu
+      threshold: 80
+      enabled: true
+    - type: high_memory
+      threshold: 90
+      enabled: true
+    - type: service_down
+      enabled: true
+
+# Logs
+logging:
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: 3

@@ -1,0 +1,140 @@
+{
+  "name": "whatsapp-sender",
+  "description": "Sistema de envio automatizado de mensagens via WhatsApp",
+  "version": "1.0.0",
+  "services": [
+    {
+      "name": "api",
+      "type": "app",
+      "image": "python:3.11-slim",
+      "command": "sh -c 'pip install --no-cache-dir -r requirements.txt 2>/dev/null || true && python3 -m app.standalone_server'",
+      "ports": [
+        {
+          "published": 8000,
+          "target": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "env": [
+        {
+          "key": "EVOLUTION_API_URL",
+          "value": "https://evolution.etechats.com.br"
+        },
+        {
+          "key": "EVOLUTION_API_KEY",
+          "value": ""
+        },
+        {
+          "key": "EVOLUTION_INSTANCE",
+          "value": "TESTE_AUTO_MGI"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "value": "INFO"
+        },
+        {
+          "key": "ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "key": "WEBHOOK_HOST",
+          "value": "0.0.0.0"
+        },
+        {
+          "key": "WEBHOOK_PORT",
+          "value": "8000"
+        },
+        {
+          "key": "WEBHOOK_PATH",
+          "value": "/webhook/:test_cases_auto"
+        }
+      ],
+      "volumes": [
+        {
+          "type": "volume",
+          "source": "whatsapp-logs",
+          "target": "/app/logs"
+        }
+      ],
+      "deploy": {
+        "replicas": 1,
+        "resources": {
+          "limits": {
+            "cpus": "1",
+            "memory": "512M"
+          },
+          "reservations": {
+            "cpus": "0.5",
+            "memory": "256M"
+          }
+        },
+        "restart_policy": {
+          "condition": "unless-stopped"
+        }
+      },
+      "healthcheck": {
+        "test": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
+        "interval": "30s",
+        "timeout": "10s",
+        "retries": 3,
+        "start_period": "40s"
+      },
+      "domains": [
+        {
+          "host": "api.whatsapp-sender.yourdomain.com",
+          "port": 8000,
+          "https": true
+        }
+      ]
+    },
+    {
+      "name": "web",
+      "type": "app",
+      "image": "python:3.11-slim",
+      "command": "python3 -m http.server 8080",
+      "ports": [
+        {
+          "published": 8080,
+          "target": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "./whatsapp_simple.html",
+          "target": "/app/whatsapp_simple.html"
+        }
+      ],
+      "deploy": {
+        "replicas": 1,
+        "resources": {
+          "limits": {
+            "cpus": "0.5",
+            "memory": "256M"
+          },
+          "reservations": {
+            "cpus": "0.25",
+            "memory": "128M"
+          }
+        },
+        "restart_policy": {
+          "condition": "unless-stopped"
+        }
+      },
+      "domains": [
+        {
+          "host": "whatsapp-sender.yourdomain.com",
+          "port": 8080,
+          "https": true
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "name": "whatsapp-logs",
+      "driver": "local"
+    }
+  ]
+}

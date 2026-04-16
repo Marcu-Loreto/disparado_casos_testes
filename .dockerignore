@@ -1,0 +1,76 @@
+# ========================================
+# DOCKER IGNORE
+# ========================================
+# Arquivos que não devem ser copiados para a imagem Docker
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Credenciais e configurações sensíveis
+.env
+*.log
+*.sqlite
+*.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentação de desenvolvimento
+*.md
+!README.md
+ANALISE_FINAL.md
+ATIVAR_VENV.md
+GIT_STATUS.md
+PUSH_GITHUB.md
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.backup
+.DS_Store
+Thumbs.db
+
+# Scripts de desenvolvimento
+debug_*.py
+test_*.py
+fix_*.py
+analyze_*.py
+git_automator.py
+
+# Exemplos
+examples/
+exemplo_*.csv
+exemplo_*.txt

@@ -40,6 +40,15 @@ class Settings(BaseSettings):
     WEBHOOK_HOST: str = Field(default="0.0.0.0", env="WEBHOOK_HOST")
     WEBHOOK_PORT: int = Field(default=8000, env="WEBHOOK_PORT")
     WEBHOOK_PATH: str = Field(default="/webhook/:test_cases_auto", env="WEBHOOK_PATH")
+    
+    # Webhook Reception Configuration (URL completa para receber mensagens)
+    WEBHOOK_RECEPTION_URL: str = Field(
+        default="https://webhook.etechats.com.br/webhook/TESTE01", 
+        env="WEBHOOK_RECEPTION_URL"
+    )
+    
+    # GitHub Token (opcional)
+    GITHUB_TOKEN: str = Field(default="", env="GITHUB_TOKEN")
 
     class Config:
         env_file = ".env"

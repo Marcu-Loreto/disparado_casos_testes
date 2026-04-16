@@ -7,6 +7,14 @@
 python3 iniciar_sistema.py
 ```
 
+
+## Inicir o sistema geral 
+# bash iniciar.sh
+# Parar
+# bash parar_sistema.sh
+
+
+
 ### **Método 2: Script Bash (Linux/Mac)**
 ```bash
 ./start.sh
